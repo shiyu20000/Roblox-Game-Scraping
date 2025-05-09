@@ -51,6 +51,9 @@ async def scrape_top_games():
             except Exception:
                 session_time = None
             game['average_session_time'] = session_time
+            if session_time is None or session_time == '':
+                with open('scraper.log', 'a') as logf:
+                    logf.write(f"[{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}] Missing average_session_time for {game['name']} ({game['url']}) on {datetime.utcnow().strftime('%Y-%m-%d')}\n")
             time.sleep(1)
         await browser.close()
         return games
@@ -65,6 +68,24 @@ def main():
     df['daily_rank'] = df['concurrent_users'].rank(method='first', ascending=False).astype(int)
     # Reorder columns: date, daily_rank, name, url, concurrent_users, visits, average_session_time
     df = df[['date', 'daily_rank', 'name', 'url', 'concurrent_users', 'visits', 'average_session_time']]
+
+    # Calculate incremental visits for days after the first day
+    if os.path.exists(CSV_FILE) and os.path.getsize(CSV_FILE) > 0:
+        prev_df = pd.read_csv(CSV_FILE)
+        prev_df['date'] = prev_df['date'].astype(str)
+        prev_df = prev_df.sort_values(['name', 'url', 'date'])
+        # Get the last available visits for each game
+        last_visits = prev_df.groupby(['name', 'url'])['visits'].last().to_dict()
+        for idx, row in df.iterrows():
+            key = (row['name'], row['url'])
+            try:
+                prev_visits = int(last_visits[key])
+                curr_visits = int(row['visits'])
+                df.at[idx, 'visits'] = curr_visits - prev_visits
+            except (KeyError, ValueError):
+                # If no previous visits or conversion error, keep as is
+                pass
+
     # Append to CSV, create with header if not exists, handle empty file
     write_header = not os.path.exists(CSV_FILE) or os.path.getsize(CSV_FILE) == 0
     df.to_csv(CSV_FILE, mode='a', header=write_header, index=False)
