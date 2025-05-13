@@ -1,0 +1,17 @@
+# Python virtual environment
+mcp-env/
+venv/
+# VS Code and Dev Container settings
+.vscode/
+.devcontainer/
+
+# macOS system files
+.DS_Store
+
+# Backup and temp files
+env_and_config_backup/
+Untitled-1.py
+
+# Log and CSV files (uncomment if you don't want to track these)
+# scraper.log
+# roblox_game_stats.csv 
