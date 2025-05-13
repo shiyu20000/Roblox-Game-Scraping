@@ -29,11 +29,11 @@ else:
         st.subheader("Concurrent Users Over Time")
         for game in selected_games:
             game_df = filtered[filtered['name'] == game]
-            st.line_chart(game_df.set_index('date')['concurrent_users'], height=200)
+            st.line_chart(game_df.set_index('date')['average_ccu'], height=200)
         st.subheader("Average Session Time Over Time")
         for game in selected_games:
             game_df = filtered[filtered['name'] == game]
-            st.line_chart(game_df.set_index('date')['average_session_time'], height=200)
+            st.line_chart(game_df.set_index('date')['session_length'], height=200)
         st.subheader("Visits (Incremental) Over Time")
         for game in selected_games:
             game_df = filtered[filtered['name'] == game]
