@@ -34,13 +34,16 @@ else:
         st.subheader("Average Concurrent Users (CCU) Over Time")
         for game in selected_games:
             game_df = filtered[filtered['name'] == game]
+            st.markdown(f"#### Concurrent Users for {game}")
             st.line_chart(game_df.set_index('date')['average_ccu'], height=200)
         st.subheader("Average Session Length Over Time")
         for game in selected_games:
             game_df = filtered[filtered['name'] == game]
+            st.markdown(f"#### Session Length for {game}")
             st.line_chart(game_df.set_index('date')['session_length'], height=200)
         st.subheader("Visits (Daily) Over Time")
         for game in selected_games:
             game_df = filtered[filtered['name'] == game]
+            st.markdown(f"#### Visits for {game}")
             st.line_chart(game_df.set_index('date')['visits'], height=200)
         st.markdown("**Note:** The 'visits' column represents daily visits.") 
