@@ -1,0 +1,38 @@
+name: Daily Roblox Scrape
+
+on:
+  schedule:
+    - cron: '5 1 * * *'  # Runs at 01:05 UTC every day
+  workflow_dispatch:      # Allows manual trigger
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install --with-deps
+
+      - name: Run daily scrape
+        run: python scrape_daily_top10_game_history.py
+
+      - name: Commit and push results
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add roblox_top10_history.csv
+          git commit -m "Update Roblox top 10 history (automated)" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
