@@ -31,19 +31,19 @@ else:
     selected_games = st.multiselect("Select games to visualize:", games, default=list(games))
     filtered = df[df['name'].isin(selected_games)]
     if not filtered.empty:
-        st.subheader("Average Concurrent Users (CCU) Over Time")
-        for game in selected_games:
-            game_df = filtered[filtered['name'] == game]
-            st.markdown(f"#### Concurrent Users for {game}")
-            st.line_chart(game_df.set_index('date')['average_ccu'], height=200)
-        st.subheader("Average Session Length Over Time")
-        for game in selected_games:
-            game_df = filtered[filtered['name'] == game]
-            st.markdown(f"#### Session Length for {game}")
-            st.line_chart(game_df.set_index('date')['session_length'], height=200)
-        st.subheader("Visits (Daily) Over Time")
-        for game in selected_games:
-            game_df = filtered[filtered['name'] == game]
-            st.markdown(f"#### Visits for {game}")
-            st.line_chart(game_df.set_index('date')['visits'], height=200)
+        with st.expander("Average Concurrent Users (CCU) Over Time", expanded=False):
+            for game in selected_games:
+                game_df = filtered[filtered['name'] == game]
+                st.markdown(f"#### Concurrent Users for {game}")
+                st.line_chart(game_df.set_index('date')['average_ccu'], height=200)
+        with st.expander("Average Session Length Over Time", expanded=False):
+            for game in selected_games:
+                game_df = filtered[filtered['name'] == game]
+                st.markdown(f"#### Session Length for {game}")
+                st.line_chart(game_df.set_index('date')['session_length'], height=200)
+        with st.expander("Visits (Daily) Over Time", expanded=False):
+            for game in selected_games:
+                game_df = filtered[filtered['name'] == game]
+                st.markdown(f"#### Visits for {game}")
+                st.line_chart(game_df.set_index('date')['visits'], height=200)
         st.markdown("**Note:** The 'visits' column represents daily visits.") 
