@@ -6,7 +6,7 @@ st.title("Roblox Top Games Daily Stats")
 
 @st.cache_data
 def load_data():
-    return pd.read_csv("roblox_game_stats.csv")
+    return pd.read_csv("roblox_top10_history.csv")
 
 # Add a refresh button
 if st.button("Refresh Data"):
