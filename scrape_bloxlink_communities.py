@@ -1,16 +1,11 @@
 import asyncio
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 import pandas as pd
 import re
 from datetime import datetime
 
 BASE_URL = "https://blox.link/communities/search?page={}"
-
-RETRIES = 3
-WAIT_BETWEEN_RETRIES = 5  # seconds
-PAGE_WAIT = 30  # seconds to wait for page load
-SELECTOR_WAIT = 30  # seconds to wait for selector
 
 def parse_member_count(member_str):
     # Remove non-numeric and non-K/M characters
@@ -26,7 +21,7 @@ def parse_member_count(member_str):
         num *= 1_000_000
     return num
 
-async def scrape_bloxlink():
+async def scrape_bloxlink(max_retries=3, retry_wait=5):
     communities = []
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -41,17 +36,15 @@ async def scrape_bloxlink():
         page = await context.new_page()
         for page_num in range(1, 11):  # Pages 1 to 10
             url = BASE_URL.format(page_num)
-            success = False
-            for attempt in range(RETRIES):
+            for attempt in range(1, max_retries + 1):
                 try:
-                    print(f"Scraping {url} (attempt {attempt+1})...")
-                    await page.goto(url, wait_until="domcontentloaded", timeout=PAGE_WAIT * 1000)
-                    await asyncio.sleep(3)  # Let dynamic content load
+                    await page.goto(url, wait_until="domcontentloaded")
+                    await asyncio.sleep(10)
                     content = await page.content()
                     if "Just a moment..." in content or "Verifying you are human" in content:
                         print(f"Blocked by Cloudflare on {url}")
-                        break
-                    await page.wait_for_selector("a[href^='/communities/']", timeout=SELECTOR_WAIT * 1000)
+                        raise Exception("Cloudflare block")
+                    await page.wait_for_selector("a[href^='/communities/']", timeout=60000)
                     html = await page.content()
                     soup = BeautifulSoup(html, "html.parser")
                     for card in soup.select("a[href^='/communities/']:not([href*='/tag/'])"):
@@ -74,28 +67,23 @@ async def scrape_bloxlink():
                             "description": description,
                             "tags": ", ".join(tags)
                         })
-                    success = True
+                    print(f"Successfully scraped page {page_num} on attempt {attempt}")
                     break  # Success, break out of retry loop
-                except PlaywrightTimeoutError as e:
-                    print(f"Timeout error on {url} (attempt {attempt+1}): {e}")
-                    await asyncio.sleep(WAIT_BETWEEN_RETRIES)
                 except Exception as e:
-                    print(f"Error scraping {url} (attempt {attempt+1}): {e}")
-                    await asyncio.sleep(WAIT_BETWEEN_RETRIES)
-            if not success:
-                print(f"Failed to scrape {url} after {RETRIES} attempts. Skipping.")
+                    print(f"Attempt {attempt} failed for page {page_num}: {e}")
+                    if attempt < max_retries:
+                        print(f"Retrying in {retry_wait} seconds...")
+                        await asyncio.sleep(retry_wait)
+                    else:
+                        print(f"Failed to scrape page {page_num} after {max_retries} attempts.")
         await browser.close()
 
     df = pd.DataFrame(communities)
 
     # Calculate average member number
-    if not df.empty:
-        df['member_num'] = df['members'].apply(parse_member_count)
-        avg_members = df['member_num'].mean()
-        print(f"Average member number across all channels: {avg_members:.2f}")
-    else:
-        avg_members = 0
-        print("No communities scraped.")
+    df['member_num'] = df['members'].apply(parse_member_count)
+    avg_members = df['member_num'].mean()
+    print(f"Average member number across all channels: {avg_members:.2f}")
 
     # Save to daily average CSV
     today = datetime.utcnow().strftime("%Y-%m-%d")
