@@ -1,3 +1,10 @@
 pandas
 playwright
-requests 
+requests
+beautifulsoup4
+streamlit
+json
+re
+datetime
+asyncio
+playwright.async_api
