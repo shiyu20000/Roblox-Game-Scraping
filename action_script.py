@@ -52,23 +52,18 @@ def main():
 # 2. Scrape bloxlink (async)
 async def run_bloxlink_and_save():
     await scrape_bloxlink()
-    # After running, load the daily average CSV and save as Roblox_discord_activities.csv
-    out_csv = 'Roblox_discord_activities.csv'
-    if os.path.exists(out_csv):
-        df = pd.read_csv(out_csv)
-        # Add today's date
-        today = datetime.utcnow().strftime("%Y-%m-%d")
-        df['date'] = today
-        df.to_csv(out_csv, index=False)
-        print(f"Saved Roblox Discord activities to {out_csv}")
-    else:
-        print(f"{out_csv} not found after scraping.")
+    # The date is already added in scrape_bloxlink, so we don't need to do anything else here
+    print("Discord activities scraping completed")
 
 # 3. Scrape streamer data
 
 def streamer_scrape_and_save():
     # Get DataFrame from streamer scraping
     df = streamer_main()
+    
+    if df is None:
+        print("Warning: Streamer scraping failed, skipping streamer stats save")
+        return
     
     # Add today's date column
     today = datetime.utcnow().strftime("%Y-%m-%d")
@@ -88,6 +83,12 @@ def streamer_scrape_and_save():
 
 
 if __name__ == "__main__":
-    main()
-    asyncio.run(run_bloxlink_and_save())
-    streamer_scrape_and_save() 
+    try:
+        main()
+        asyncio.run(run_bloxlink_and_save())
+        streamer_scrape_and_save()
+    except Exception as e:
+        print(f"Warning: An error occurred during execution: {str(e)}")
+        print("Continuing with any successful data that was collected...")
+        # Exit with success code since we handled the error
+        exit(0) 

@@ -30,6 +30,51 @@ with tab1:
     else:
         st.dataframe(df)
         st.markdown("---")
+        
+        # Add combined top 10 visualization
+        with st.expander("Combined Top 10 Games Daily Stats", expanded=True):
+            # Get the latest date's top 10 games
+            latest_date = df['date'].max()
+            latest_top10 = df[df['date'] == latest_date].sort_values('ranking')['name'].tolist()
+            
+            # Filter data for these games
+            top10_df = df[df['name'].isin(latest_top10)]
+            
+            # Create a pivot table for CCU
+            ccu_pivot = top10_df.pivot_table(
+                index='date',
+                columns='name',
+                values='average_ccu',
+                aggfunc='sum'
+            ).fillna(0)
+            
+            # Create a pivot table for visits
+            visits_pivot = top10_df.pivot_table(
+                index='date',
+                columns='name',
+                values='visits',
+                aggfunc='sum'
+            ).fillna(0)
+            
+            # Plot combined CCU
+            st.markdown("### Combined Daily CCU for Top 10 Games")
+            st.line_chart(ccu_pivot, height=300)
+            
+            # Plot combined visits
+            st.markdown("### Combined Daily Visits for Top 10 Games")
+            st.line_chart(visits_pivot, height=300)
+            
+            # Add summary statistics
+            st.markdown("### Daily Summary Statistics")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Total CCU (Latest Day)", f"{ccu_pivot.iloc[-1].sum():,.0f}")
+                st.metric("Average CCU (Latest Day)", f"{ccu_pivot.iloc[-1].mean():,.0f}")
+            with col2:
+                st.metric("Total Visits (Latest Day)", f"{visits_pivot.iloc[-1].sum():,.0f}")
+                st.metric("Average Visits (Latest Day)", f"{visits_pivot.iloc[-1].mean():,.0f}")
+        
+        st.markdown("---")
         games = df['name'].unique()
         selected_games = st.multiselect("Select games to visualize:", games, default=list(games))
         filtered = df[df['name'].isin(selected_games)]

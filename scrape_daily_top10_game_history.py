@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import requests
 import os
 import subprocess
+from search_query_cleaning import clean_name
 
 # This script fetches the top 10 Roblox games and their metrics (visits, average_ccu, session_length)
 # for YESTERDAY (UTC), not today. It appends the results to roblox_top10_history.csv.
@@ -74,6 +75,9 @@ def check_for_unknown_games(new_games, csv_path):
 def main():
     yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
     games = asyncio.run(scrape_top_games())
+    # Clean game names right after scraping
+    for game in games:
+        game['name'] = clean_name(game['name'])
     unknown_games = check_for_unknown_games(games, OUTPUT_CSV)
     rows = []
     for game in games:
@@ -87,7 +91,7 @@ def main():
         row = {
             'date': yesterday,
             'ranking': game['ranking'],
-            'name': game['name'],
+            'name': game['name'],  # This is now the cleaned name
             'id': place_id,
             'visits': visits,
             'average_ccu': average_ccu,
@@ -117,7 +121,7 @@ def main():
             # Read the new game's history and append to main CSV
             new_df = pd.read_csv('roblox_history.csv')
             new_df['id'] = game['id']
-            new_df['name'] = game['name']
+            new_df['name'] = game['name']  # This is now the cleaned name
             # Assign a temporary ranking (will be reranked)
             new_df['ranking'] = 99
             new_df = new_df[['date', 'ranking', 'name', 'id', 'visits', 'average_ccu', 'session_length']]
