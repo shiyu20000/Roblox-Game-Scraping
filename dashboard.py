@@ -64,6 +64,36 @@ with tab1:
             st.markdown("### Combined Daily Visits for Top 10 Games")
             st.line_chart(visits_pivot, height=300)
             
+            # Add total CCU and visits charts
+            st.markdown("### Total Daily CCU and Visits (Sum of Top 10)")
+            
+            # Calculate daily totals
+            daily_totals = pd.DataFrame({
+                'Total CCU': ccu_pivot.sum(axis=1),
+                'Total Visits': visits_pivot.sum(axis=1)
+            })
+            
+            # Create two columns for the charts
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("#### Total CCU Over Time")
+                st.line_chart(daily_totals['Total CCU'], height=300)
+                # Add trend line
+                st.markdown(f"**Latest Total CCU:** {daily_totals['Total CCU'].iloc[-1]:,.0f}")
+                if len(daily_totals) > 1:
+                    change = daily_totals['Total CCU'].iloc[-1] - daily_totals['Total CCU'].iloc[-2]
+                    st.markdown(f"**Change from previous day:** {change:+,.0f}")
+            
+            with col2:
+                st.markdown("#### Total Visits Over Time")
+                st.line_chart(daily_totals['Total Visits'], height=300)
+                # Add trend line
+                st.markdown(f"**Latest Total Visits:** {daily_totals['Total Visits'].iloc[-1]:,.0f}")
+                if len(daily_totals) > 1:
+                    change = daily_totals['Total Visits'].iloc[-1] - daily_totals['Total Visits'].iloc[-2]
+                    st.markdown(f"**Change from previous day:** {change:+,.0f}")
+            
             # Add summary statistics
             st.markdown("### Daily Summary Statistics")
             col1, col2 = st.columns(2)
